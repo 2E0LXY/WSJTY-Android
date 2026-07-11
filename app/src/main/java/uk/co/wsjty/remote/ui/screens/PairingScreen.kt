@@ -39,10 +39,10 @@ fun PairingScreen(
             style = MaterialTheme.typography.headlineSmall,
         )
         Text(
-            "Relay: get the wss:// URL + token from WSJT-Y's Tools -> Configure " +
+            "Relay: get the wss:// URL + password from WSJT-Y's Tools -> Configure " +
                 "Remote Control, or wsjty-relay's -add-station output.\n" +
                 "Direct (same LAN or port-forwarded): use ws://<PC's IP>:<port> " +
-                "and the same token — WSJT-Y shows both when you enable it.",
+                "and the same password — WSJT-Y shows both when you enable it.",
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
         )
@@ -60,7 +60,7 @@ fun PairingScreen(
         OutlinedTextField(
             value = token,
             onValueChange = { token = it },
-            label = { Text("Pairing token") },
+            label = { Text("Password") },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier
