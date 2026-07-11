@@ -37,6 +37,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val connectionState = relay.connectionState
     val latestStatus = relay.latestStatus
     val decodes: StateFlow<List<Decode>> = relay.decodes
+    val lastError = relay.lastError
 
     val pairing: StateFlow<PairingConfig> = settings.pairingFlow
         .stateIn(viewModelScope, SharingStarted.Eagerly, PairingConfig("", ""))

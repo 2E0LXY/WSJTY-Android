@@ -15,6 +15,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 enum class ConnectionState { DISCONNECTED, CONNECTING, CONNECTED }
@@ -45,6 +46,9 @@ class RelayConnection(private val scope: CoroutineScope) {
 
     private val _decodes = MutableStateFlow<List<Decode>>(emptyList())
     val decodes: StateFlow<List<Decode>> = _decodes.asStateFlow()
+
+    private val _lastError = MutableStateFlow<String?>(null)
+    val lastError: StateFlow<String?> = _lastError.asStateFlow()
 
     private val _events = MutableSharedFlow<RelayEvent>(extraBufferCapacity = 16)
     val events: SharedFlow<RelayEvent> = _events.asSharedFlow()
@@ -93,17 +97,27 @@ class RelayConnection(private val scope: CoroutineScope) {
         val cfg = pairing ?: return
         if (!enabled) return
 
+        val base = cfg.relayUrl.trim().trimEnd('/').let {
+            if (it.startsWith("ws://") || it.startsWith("wss://")) it else "ws://$it"
+        }
         val url = buildString {
-            append(cfg.relayUrl.trimEnd('/'))
+            append(base)
             append("/ws?token=")
-            append(cfg.token)
+            append(URLEncoder.encode(cfg.token, "UTF-8"))
         }
 
         _connectionState.value = ConnectionState.CONNECTING
-        val request = Request.Builder().url(url).build()
+        val request = try {
+            Request.Builder().url(url).build()
+        } catch (e: IllegalArgumentException) {
+            _lastError.value = "Invalid address: ${cfg.relayUrl}"
+            _connectionState.value = ConnectionState.DISCONNECTED
+            return
+        }
         socket = client.newWebSocket(request, object : WebSocketListener() {
 
             override fun onOpen(webSocket: WebSocket, response: Response) {
+                _lastError.value = null
                 _connectionState.value = ConnectionState.CONNECTED
             }
 
@@ -121,6 +135,7 @@ class RelayConnection(private val scope: CoroutineScope) {
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                _lastError.value = t.message ?: "connection failed"
                 _connectionState.value = ConnectionState.DISCONNECTED
                 scheduleReconnect()
             }

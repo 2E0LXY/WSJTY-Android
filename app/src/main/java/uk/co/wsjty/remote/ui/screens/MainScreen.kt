@@ -52,6 +52,7 @@ import uk.co.wsjty.remote.ui.theme.WsjtySurface
 @Composable
 fun MainScreen(
     connectionState: ConnectionState,
+    lastError: String?,
     status: StationStatus?,
     decodes: List<Decode>,
     onReply: (Decode) -> Unit,
@@ -82,6 +83,16 @@ fun MainScreen(
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
+            if (connectionState == ConnectionState.DISCONNECTED && lastError != null) {
+                Text(
+                    text = lastError,
+                    color = WsjtyRed,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                )
+            }
             StatusCard(status)
             BandRow(onSetBand)
             DecodeList(decodes, onReply, onClearDecodes)
