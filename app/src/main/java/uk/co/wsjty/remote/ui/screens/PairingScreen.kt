@@ -39,8 +39,10 @@ fun PairingScreen(
             style = MaterialTheme.typography.headlineSmall,
         )
         Text(
-            "Get these from WSJT-Y's Tools -> Configure Remote Control, " +
-                "or from wsjty-relay's -add-station output.",
+            "Relay: get the wss:// URL + token from WSJT-Y's Tools -> Configure " +
+                "Remote Control, or wsjty-relay's -add-station output.\n" +
+                "Direct (same LAN or port-forwarded): use ws://<PC's IP>:<port> " +
+                "and the same token — WSJT-Y shows both when you enable it.",
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
         )
@@ -48,7 +50,7 @@ fun PairingScreen(
         OutlinedTextField(
             value = relayUrl,
             onValueChange = { relayUrl = it },
-            label = { Text("Relay URL (wss://...)") },
+            label = { Text("Address (wss://relay/... or ws://192.168.x.x:port)") },
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()

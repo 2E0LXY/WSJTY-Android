@@ -18,11 +18,30 @@ event when one gets logged.
 
 ## Setup
 
-1. Deploy [wsjty-relay](https://github.com/2E0LXY/wsjty-relay) and create a
-   station: `./wsjty_relay -add-station "My Shack"` — this prints a token.
-2. In WSJT-Y: **Tools → Configure Remote Control**, enter the relay's
+Two ways to connect — pick one, or configure both (WSJT-Y can run either
+or both at once):
+
+**Relay (works anywhere, no router config):**
+1. Deploy [wsjty-relay](https://github.com/2E0LXY/wsjty-relay), create a
+   station: `./wsjty_relay -add-station "My Shack"` — prints a token.
+2. WSJT-Y: **Tools → Configure Remote Control**, enter the relay's
    `wss://` URL and the token.
-3. In this app: enter the same URL and token on the pairing screen.
+3. This app: enter the same `wss://` URL and token.
+
+**Direct (same LAN, or WAN with a port forwarded on your router):**
+1. WSJT-Y: **Tools → Configure Remote Control** — leave the relay URL
+   blank (or set it too, doesn't matter), set a token, then give it a
+   port for direct mode. It'll show you the LAN IP(s) to use.
+2. This app: enter `ws://<that IP>:<port>` and the same token.
+3. For WAN access, forward that port (TCP) on your router to the shack
+   PC, then use your WAN IP or a DDNS hostname the same way.
+
+Direct mode is plain `ws://` — not encrypted in transit, unlike the
+relay's `wss://`. The auth token still gates access either way, but a
+WAN-exposed direct connection is lower-assurance than the relay (which
+terminates TLS via Caddy). LAN-only direct use has the same trust model
+as the desktop app's existing local UDP protocol (JTAlert/GridTracker
+etc. — also unencrypted on the LAN).
 
 ## Build
 
