@@ -47,6 +47,9 @@ class RelayConnection(private val scope: CoroutineScope) {
     private val _decodes = MutableStateFlow<List<Decode>>(emptyList())
     val decodes: StateFlow<List<Decode>> = _decodes.asStateFlow()
 
+    private val _qsoLog = MutableStateFlow<List<QsoLogged>>(emptyList())
+    val qsoLog: StateFlow<List<QsoLogged>> = _qsoLog.asStateFlow()
+
     private val _lastError = MutableStateFlow<String?>(null)
     val lastError: StateFlow<String?> = _lastError.asStateFlow()
 
@@ -56,6 +59,7 @@ class RelayConnection(private val scope: CoroutineScope) {
     private companion object {
         const val RECONNECT_DELAY_MS = 4000L
         const val MAX_DECODES_KEPT = 500
+        const val MAX_QSO_LOG_KEPT = 500
     }
 
     fun connect(config: PairingConfig) {
@@ -170,6 +174,7 @@ class RelayConnection(private val scope: CoroutineScope) {
                 scope.launch { _events.emit(event) }
             }
             is RelayEvent.QsoLoggedEvent -> {
+                _qsoLog.value = (_qsoLog.value + event.qso).takeLast(MAX_QSO_LOG_KEPT)
                 scope.launch { _events.emit(event) }
             }
         }

@@ -64,6 +64,7 @@ private fun WsjtyApp(viewModel: MainViewModel = viewModel()) {
     val connectionState by viewModel.connectionState.collectAsState()
     val status by viewModel.latestStatus.collectAsState()
     val decodes by viewModel.decodes.collectAsState()
+    val qsoLog by viewModel.qsoLog.collectAsState()
     val lastError by viewModel.lastError.collectAsState()
 
     // Force the pairing screen open manually (e.g. to re-pair) even if
@@ -85,6 +86,7 @@ private fun WsjtyApp(viewModel: MainViewModel = viewModel()) {
             lastError = lastError,
             status = status,
             decodes = decodes,
+            qsoLog = qsoLog,
             onReply = viewModel::replyTo,
             onSetBand = viewModel::setBand,
             onHaltTx = viewModel::haltTx,

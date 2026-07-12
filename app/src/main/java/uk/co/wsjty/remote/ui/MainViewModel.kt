@@ -38,6 +38,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val connectionState = relay.connectionState
     val latestStatus = relay.latestStatus
     val decodes: StateFlow<List<Decode>> = relay.decodes
+    val qsoLog: StateFlow<List<uk.co.wsjty.remote.data.QsoLogged>> = relay.qsoLog
     val lastError = relay.lastError
 
     val pairing: StateFlow<PairingConfig> = settings.pairingFlow

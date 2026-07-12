@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import uk.co.wsjty.remote.data.CallsignFlags
 import uk.co.wsjty.remote.data.ConnectionState
 import uk.co.wsjty.remote.data.Decode
+import uk.co.wsjty.remote.data.QsoLogged
 import uk.co.wsjty.remote.data.StationStatus
 import uk.co.wsjty.remote.ui.BandOption
 import uk.co.wsjty.remote.ui.ftBands
@@ -84,6 +85,7 @@ fun MainScreen(
     lastError: String?,
     status: StationStatus?,
     decodes: List<Decode>,
+    qsoLog: List<QsoLogged>,
     onReply: (Decode) -> Unit,
     onSetBand: (BandOption) -> Unit,
     onHaltTx: () -> Unit,
@@ -139,8 +141,35 @@ fun MainScreen(
                 onToggleCqOnly = onToggleCqOnly,
             )
             StatusCard(status, onSetBand)
-            DecodeList(decodes, status?.dxCall.orEmpty(), status?.cqOnly ?: false, onReply, onClearDecodes)
+
+            var showQsoLog by remember { mutableStateOf(false) }
+            MainTabRow(
+                showQsoLog = showQsoLog,
+                qsoCount = qsoLog.size,
+                onSelect = { showQsoLog = it },
+            )
+            if (showQsoLog) {
+                QsoLogList(qsoLog)
+            } else {
+                DecodeList(decodes, status?.dxCall.orEmpty(), status?.cqOnly ?: false, onReply, onClearDecodes)
+            }
         }
+    }
+}
+
+// Lightweight two-way switch rather than a full TabRow/NavigationBar --
+// there are only ever two panes here and this matches the compact chip
+// styling already used for Auto CQ / CQ only above.
+@Composable
+private fun MainTabRow(showQsoLog: Boolean, qsoCount: Int, onSelect: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        QuickToggleChip(label = "Decodes", checked = !showQsoLog, onToggle = { onSelect(false) })
+        QuickToggleChip(label = "QSO Log ($qsoCount)", checked = showQsoLog, onToggle = { onSelect(true) })
     }
 }
 
@@ -469,6 +498,27 @@ private fun DecodeRow(decode: Decode, isActiveConversation: Boolean, onClick: ()
             softWrap = false,
             modifier = Modifier.width(30.dp),
         )
+        // WSJT-X's own Band Activity table always shows DT and DF (audio
+        // freq) alongside dB -- both were already flowing over the wire
+        // and parsed into Decode, just never rendered here.
+        Text(
+            String.format(java.util.Locale.US, "%.1f", decode.dt),
+            fontSize = 10.sp,
+            fontFamily = FontFamily.Monospace,
+            color = textColor,
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier.width(34.dp),
+        )
+        Text(
+            "${decode.audioFreqHz}",
+            fontSize = 10.sp,
+            fontFamily = FontFamily.Monospace,
+            color = textColor,
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier.width(44.dp),
+        )
         CallsignFlags.flagForMessage(decode.message)?.let { flag ->
             Text(flag, fontSize = 12.sp)
         }
@@ -478,6 +528,74 @@ private fun DecodeRow(decode: Decode, isActiveConversation: Boolean, onClick: ()
             fontWeight = if (decode.isCq || isActiveConversation || decode.forMe) FontWeight.Bold else FontWeight.Normal,
             color = textColor,
             modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+// Confirmed QSOs, as broadcast by the desktop's Log QSO dialog (qso_logged
+// messages). Newest first, matching the decode list's convention.
+@Composable
+private fun QsoLogList(qsoLog: List<QsoLogged>) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+        ) {
+            Text(
+                "${qsoLog.size} logged QSOs",
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White,
+            )
+        }
+        if (qsoLog.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No QSOs logged yet", color = Color.White.copy(alpha = 0.6f))
+            }
+        } else {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(qsoLog.asReversed()) { qso -> QsoLogRow(qso) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QsoLogRow(qso: QsoLogged) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            qso.call,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily.Monospace,
+            color = WsjtyYellow,
+            modifier = Modifier.width(80.dp),
+        )
+        Text(
+            qso.grid,
+            fontSize = 11.sp,
+            fontFamily = FontFamily.Monospace,
+            color = Color.White.copy(alpha = 0.8f),
+            modifier = Modifier.width(56.dp),
+        )
+        Text(
+            "${formatFreqMHz(qso.dialFreqHz)} ${qso.mode}",
+            fontSize = 11.sp,
+            fontFamily = FontFamily.Monospace,
+            color = Color.White.copy(alpha = 0.8f),
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            "${qso.reportSent}/${qso.reportRcvd}",
+            fontSize = 11.sp,
+            fontFamily = FontFamily.Monospace,
+            color = WsjtyGreen,
         )
     }
 }
