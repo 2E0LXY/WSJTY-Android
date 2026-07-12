@@ -1,6 +1,12 @@
 package uk.co.wsjty.remote.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -67,6 +73,7 @@ import uk.co.wsjty.remote.ui.theme.WsjtyFreqBlue
 import uk.co.wsjty.remote.ui.theme.WsjtyGreen
 import uk.co.wsjty.remote.ui.theme.WsjtyRed
 import uk.co.wsjty.remote.ui.theme.WsjtySeparatorBlue
+import uk.co.wsjty.remote.ui.theme.WsjtySeparatorText
 import uk.co.wsjty.remote.ui.theme.WsjtySurface
 import uk.co.wsjty.remote.ui.theme.WsjtyYellow
 
@@ -98,9 +105,7 @@ fun MainScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onHaltTx) {
-                        Icon(Icons.Filled.Stop, contentDescription = "Halt Tx", tint = WsjtyRed)
-                    }
+                    RxTxIndicator(transmitting = status?.transmitting ?: false, onHaltTx = onHaltTx)
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")
                     }
@@ -134,7 +139,7 @@ fun MainScreen(
                 onToggleCqOnly = onToggleCqOnly,
             )
             StatusCard(status, onSetBand)
-            DecodeList(decodes, status?.dxCall.orEmpty(), onReply, onClearDecodes)
+            DecodeList(decodes, status?.dxCall.orEmpty(), status?.cqOnly ?: false, onReply, onClearDecodes)
         }
     }
 }
@@ -181,6 +186,40 @@ private fun QuickToggleChip(label: String, checked: Boolean, onToggle: (Boolean)
             .padding(horizontal = 14.dp, vertical = 8.dp),
     ) {
         Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = fg)
+    }
+}
+
+// Doubles as both a live RX/TX status readout and an always-works Halt Tx
+// button — tapping it sends halt_tx unconditionally, whatever state it's
+// currently showing, so it's a reliable "stop everything now" control
+// rather than something whose behaviour depends on what it's displaying.
+@Composable
+private fun RxTxIndicator(transmitting: Boolean, onHaltTx: () -> Unit) {
+    val infiniteTransition = rememberInfiniteTransition(label = "tx-flash")
+    val flashAlpha by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0.35f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(500, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "tx-flash-alpha",
+    )
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .padding(horizontal = 4.dp)
+            .clip(RoundedCornerShape(6.dp))
+            .background((if (transmitting) WsjtyRed else WsjtyGreen).copy(alpha = 0.15f))
+            .clickable { onHaltTx() }
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+    ) {
+        Text(
+            if (transmitting) "TX" else "RX",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (transmitting) WsjtyRed.copy(alpha = flashAlpha) else WsjtyGreen,
+        )
     }
 }
 
@@ -319,9 +358,11 @@ private fun BandGrid(onSelect: (BandOption) -> Unit) {
 private fun DecodeList(
     decodes: List<Decode>,
     activeCall: String,
+    cqOnly: Boolean,
     onReply: (Decode) -> Unit,
     onClearDecodes: () -> Unit,
 ) {
+    val shown = if (cqOnly) decodes.filter { it.isCq } else decodes
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier
@@ -330,7 +371,8 @@ private fun DecodeList(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                "${decodes.size} decodes  ·  tap a CQ to reply",
+                if (cqOnly) "${shown.size} of ${decodes.size} decodes (CQ only)  ·  tap to reply"
+                else "${decodes.size} decodes  ·  tap a CQ to reply",
                 style = MaterialTheme.typography.labelMedium,
             )
             Text(
@@ -340,7 +382,7 @@ private fun DecodeList(
             )
         }
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            val reversed = decodes.asReversed()
+            val reversed = shown.asReversed()
             itemsIndexed(reversed) { index, decode ->
                 if (index == 0 || reversed[index - 1].time != decode.time) {
                     SequenceSeparator(decode.time)
@@ -376,7 +418,7 @@ private fun SequenceSeparator(time: String) {
             .background(WsjtySeparatorBlue)
             .padding(vertical = 3.dp),
     ) {
-        Text(time, fontSize = 10.sp, color = WsjtyAccent, fontWeight = FontWeight.Bold)
+        Text(time, fontSize = 10.sp, color = WsjtySeparatorText, fontWeight = FontWeight.Bold)
     }
 }
 

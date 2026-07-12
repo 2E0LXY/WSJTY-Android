@@ -17,3 +17,4 @@ val WsjtyFreqBlue = Color(0xFF7FD8FF)
 
 // Decode-sequence separator bar (matches desktop's Band Activity separator)
 val WsjtySeparatorBlue = Color(0xFF0A2040)
+val WsjtySeparatorText = Color(0xFFF0F4F8)   // near-white — WsjtyAccent was too close to WsjtyFreqBlue, hard to tell apart at a glance

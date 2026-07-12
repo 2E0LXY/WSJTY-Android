@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import uk.co.wsjty.remote.data.Decode
+import uk.co.wsjty.remote.data.MorsePlayer
 import uk.co.wsjty.remote.data.PairingConfig
 import uk.co.wsjty.remote.data.RelayConnection
 import uk.co.wsjty.remote.data.SettingsStore
@@ -46,6 +47,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val current = settings.currentPairing()
             if (current.isConfigured) relay.connect(current)
+        }
+
+        // Fire a Morse "CQ" alert the first time a new for-me decode
+        // appears. Track by count rather than diffing full decode objects
+        // -- decodes are only ever appended (see RelayConnection), so
+        // anything beyond the previously-seen size is new. The very first
+        // collected value is whatever was already cached when this
+        // ViewModel started (StateFlow always replays current state to a
+        // new collector) -- skip alerting on that batch, only on genuine
+        // new arrivals afterwards.
+        viewModelScope.launch {
+            var lastSeenCount = -1
+            decodes.collect { list ->
+                if (lastSeenCount >= 0 && list.size > lastSeenCount) {
+                    list.subList(lastSeenCount, list.size)
+                        .filter { it.forMe }
+                        .forEach { MorsePlayer.play("CQ") }
+                }
+                lastSeenCount = list.size
+            }
         }
     }
 
