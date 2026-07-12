@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -63,6 +64,7 @@ import uk.co.wsjty.remote.ui.theme.WsjtyBorder
 import uk.co.wsjty.remote.ui.theme.WsjtyFreqBlue
 import uk.co.wsjty.remote.ui.theme.WsjtyGreen
 import uk.co.wsjty.remote.ui.theme.WsjtyRed
+import uk.co.wsjty.remote.ui.theme.WsjtySeparatorBlue
 import uk.co.wsjty.remote.ui.theme.WsjtySurface
 import uk.co.wsjty.remote.ui.theme.WsjtyYellow
 
@@ -333,10 +335,31 @@ private fun DecodeList(
             )
         }
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(decodes.asReversed()) { decode ->
+            val reversed = decodes.asReversed()
+            itemsIndexed(reversed) { index, decode ->
+                if (index == 0 || reversed[index - 1].time != decode.time) {
+                    SequenceSeparator(decode.time)
+                }
                 DecodeRow(decode, onClick = { if (decode.isCq) onReply(decode) })
             }
         }
+    }
+}
+
+@Composable
+private fun SequenceSeparator(time: String) {
+    // Matches the desktop's Band Activity separator bar (v3.4.13): solid
+    // #0a2040 background, #00d4ff text — same colour as the dock title
+    // bars, marking the boundary between one FT8 sequence's decodes and
+    // the next rather than the old dashed-text-line convention.
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(WsjtySeparatorBlue)
+            .padding(vertical = 3.dp),
+    ) {
+        Text(time, fontSize = 10.sp, color = WsjtyAccent, fontWeight = FontWeight.Bold)
     }
 }
 

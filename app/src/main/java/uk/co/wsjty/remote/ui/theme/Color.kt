@@ -14,3 +14,6 @@ val WsjtyTextPrimary = Color(0xFFC0D8E8)
 
 // Seven-segment frequency readout
 val WsjtyFreqBlue = Color(0xFF7FD8FF)
+
+// Decode-sequence separator bar (matches desktop's Band Activity separator)
+val WsjtySeparatorBlue = Color(0xFF0A2040)
