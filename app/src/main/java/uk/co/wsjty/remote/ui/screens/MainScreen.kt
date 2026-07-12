@@ -1,5 +1,10 @@
 package uk.co.wsjty.remote.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,48 +20,51 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.font.FontFamily
-import uk.co.wsjty.remote.data.CallsignFlags
-import uk.co.wsjty.remote.ui.theme.Dseg7
-import uk.co.wsjty.remote.ui.theme.WsjtyFreqBlue
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import uk.co.wsjty.remote.data.CallsignFlags
 import uk.co.wsjty.remote.data.ConnectionState
 import uk.co.wsjty.remote.data.Decode
 import uk.co.wsjty.remote.data.StationStatus
 import uk.co.wsjty.remote.ui.BandOption
 import uk.co.wsjty.remote.ui.ftBands
+import uk.co.wsjty.remote.ui.theme.Dseg7
 import uk.co.wsjty.remote.ui.theme.WsjtyAccent
 import uk.co.wsjty.remote.ui.theme.WsjtyBorder
+import uk.co.wsjty.remote.ui.theme.WsjtyFreqBlue
 import uk.co.wsjty.remote.ui.theme.WsjtyGreen
 import uk.co.wsjty.remote.ui.theme.WsjtyRed
-import uk.co.wsjty.remote.ui.theme.WsjtyYellow
 import uk.co.wsjty.remote.ui.theme.WsjtySurface
+import uk.co.wsjty.remote.ui.theme.WsjtyYellow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,8 +120,7 @@ fun MainScreen(
                         .padding(horizontal = 12.dp, vertical = 4.dp),
                 )
             }
-            StatusCard(status)
-            BandRow(onSetBand)
+            StatusCard(status, onSetBand)
             DecodeList(decodes, onReply, onClearDecodes)
         }
     }
@@ -135,75 +142,116 @@ private fun ConnectionDot(state: ConnectionState) {
 }
 
 @Composable
-private fun StatusCard(status: StationStatus?) {
+private fun StatusCard(status: StationStatus?, onSetBand: (BandOption) -> Unit) {
+    var bandPickerOpen by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(WsjtySurface)
-            .border(1.dp, WsjtyBorder)
-            .padding(12.dp),
+            .border(1.dp, WsjtyBorder),
     ) {
-        if (status == null) {
-            Text("Waiting for status from WSJT-Y…", style = MaterialTheme.typography.bodyMedium)
-        } else {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Row(verticalAlignment = Alignment.Bottom) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            if (status == null) {
+                Text("Waiting for status from WSJT-Y…", style = MaterialTheme.typography.bodyMedium)
+            } else {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    // Tapping the frequency/mode expands the band grid below —
+                    // DSEG7 readout is preserved, just made clickable with a
+                    // chevron that flips to show open/closed state.
+                    Row(
+                        verticalAlignment = Alignment.Bottom,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable { bandPickerOpen = !bandPickerOpen }
+                            .padding(vertical = 2.dp, horizontal = 4.dp),
+                    ) {
+                        Text(
+                            formatFreqMHz(status.dialFreqHz),
+                            fontFamily = Dseg7,
+                            fontSize = 26.sp,
+                            color = if (bandPickerOpen) WsjtyAccent else WsjtyFreqBlue,
+                            maxLines = 1,
+                            softWrap = false,
+                        )
+                        Text(
+                            " MHz " + status.mode,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 2.dp),
+                        )
+                        Icon(
+                            if (bandPickerOpen) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                            contentDescription = if (bandPickerOpen) "Hide band picker" else "Change band",
+                            tint = WsjtyAccent,
+                            modifier = Modifier
+                                .size(20.dp)
+                                .padding(bottom = 2.dp),
+                        )
+                    }
+                    if (status.transmitting) {
+                        Text("TX", color = WsjtyRed, fontWeight = FontWeight.Bold)
+                    } else if (status.txEnabled) {
+                        Text("Enabled", color = WsjtyGreen)
+                    }
+                }
+                if (status.dxCall.isNotBlank()) {
                     Text(
-                        formatFreqMHz(status.dialFreqHz),
-                        fontFamily = Dseg7,
-                        fontSize = 26.sp,
-                        color = WsjtyFreqBlue,
-                        maxLines = 1,
-                        softWrap = false,
+                        "Working: ${status.dxCall} ${status.dxGrid}".trim(),
+                        style = MaterialTheme.typography.bodyMedium,
                     )
+                }
+                if (status.txMsg.isNotBlank()) {
                     Text(
-                        " MHz " + status.mode,
-                        style = MaterialTheme.typography.titleMedium,
+                        "TX: ${status.txMsg}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontFamily = FontFamily.Monospace,
+                        color = if (status.transmitting) WsjtyRed else WsjtyYellow,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 2.dp),
+                        maxLines = 1,
                     )
                 }
-                if (status.transmitting) {
-                    Text("TX", color = WsjtyRed, fontWeight = FontWeight.Bold)
-                } else if (status.txEnabled) {
-                    Text("Enabled", color = WsjtyGreen)
-                }
             }
-            if (status.dxCall.isNotBlank()) {
-                Text(
-                    "Working: ${status.dxCall} ${status.dxGrid}".trim(),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            if (status.txMsg.isNotBlank()) {
-                Text(
-                    "TX: ${status.txMsg}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontFamily = FontFamily.Monospace,
-                    color = if (status.transmitting) WsjtyRed else WsjtyYellow,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                )
-            }
+        }
+
+        AnimatedVisibility(
+            visible = bandPickerOpen,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut(),
+        ) {
+            BandGrid(onSelect = { band ->
+                onSetBand(band)
+                bandPickerOpen = false
+            })
         }
     }
 }
 
 @Composable
-private fun BandRow(onSetBand: (BandOption) -> Unit) {
-    LazyRow(
+private fun BandGrid(onSelect: (BandOption) -> Unit) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(5),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 4.dp),
+            .height(96.dp)
+            .padding(bottom = 10.dp, start = 8.dp, end = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         items(ftBands) { band ->
-            OutlinedButton(onClick = { onSetBand(band) }) {
-                Text(band.label, fontSize = 12.sp)
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .border(1.dp, WsjtyBorder, RoundedCornerShape(6.dp))
+                    .clickable { onSelect(band) }
+                    .padding(vertical = 10.dp),
+            ) {
+                Text(band.label, fontSize = 13.sp, fontWeight = FontWeight.Medium)
             }
         }
     }
