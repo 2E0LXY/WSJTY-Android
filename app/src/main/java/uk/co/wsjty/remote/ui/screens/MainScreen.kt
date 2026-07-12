@@ -48,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -130,7 +131,7 @@ fun MainScreen(
                 onToggleCqOnly = onToggleCqOnly,
             )
             StatusCard(status, onSetBand)
-            DecodeList(decodes, onReply, onClearDecodes)
+            DecodeList(decodes, status?.dxCall.orEmpty(), onReply, onClearDecodes)
         }
     }
 }
@@ -264,7 +265,7 @@ private fun StatusCard(status: StationStatus?, onSetBand: (BandOption) -> Unit) 
                         "TX: ${status.txMsg}",
                         style = MaterialTheme.typography.bodyMedium,
                         fontFamily = FontFamily.Monospace,
-                        color = if (status.transmitting) WsjtyRed else WsjtyYellow,
+                        color = if (status.dxCall.isNotBlank()) WsjtyRed else WsjtyYellow,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                     )
@@ -314,6 +315,7 @@ private fun BandGrid(onSelect: (BandOption) -> Unit) {
 @Composable
 private fun DecodeList(
     decodes: List<Decode>,
+    activeCall: String,
     onReply: (Decode) -> Unit,
     onClearDecodes: () -> Unit,
 ) {
@@ -340,10 +342,22 @@ private fun DecodeList(
                 if (index == 0 || reversed[index - 1].time != decode.time) {
                     SequenceSeparator(decode.time)
                 }
-                DecodeRow(decode, onClick = { if (decode.isCq) onReply(decode) })
+                DecodeRow(
+                    decode,
+                    isActiveConversation = isPartOfConversation(decode.message, activeCall),
+                    onClick = { if (decode.isCq) onReply(decode) },
+                )
             }
         }
     }
+}
+
+// True if activeCall appears as a whole word in the message (not just a
+// substring match, which could false-positive on a callsign that's a
+// prefix/suffix of another, e.g. "F5BRF" inside "F5BRFX").
+private fun isPartOfConversation(message: String, activeCall: String): Boolean {
+    if (activeCall.isBlank()) return false
+    return message.trim().split(Regex("\\s+")).any { it.equals(activeCall, ignoreCase = true) }
 }
 
 @Composable
@@ -364,7 +378,7 @@ private fun SequenceSeparator(time: String) {
 }
 
 @Composable
-private fun DecodeRow(decode: Decode, onClick: () -> Unit) {
+private fun DecodeRow(decode: Decode, isActiveConversation: Boolean, onClick: () -> Unit) {
     val bg = when {
         decode.forMe -> MaterialTheme.colorScheme.error.copy(alpha = 0.25f)
         decode.isCq -> WsjtyAccent.copy(alpha = 0.10f)
@@ -401,7 +415,8 @@ private fun DecodeRow(decode: Decode, onClick: () -> Unit) {
         Text(
             decode.message,
             fontSize = 12.sp,
-            fontWeight = if (decode.isCq) FontWeight.Bold else FontWeight.Normal,
+            fontWeight = if (decode.isCq || isActiveConversation) FontWeight.Bold else FontWeight.Normal,
+            color = if (isActiveConversation) WsjtyRed else Color.Unspecified,
             modifier = Modifier.weight(1f),
         )
     }
