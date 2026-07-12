@@ -45,6 +45,7 @@ data class StationStatus(
     val mode: String,
     val dxCall: String,
     val dxGrid: String,
+    val txMsg: String,
     val txEnabled: Boolean,
     val transmitting: Boolean,
 )
@@ -89,6 +90,7 @@ fun parseRelayEvent(text: String): RelayEvent? {
                 mode = obj["mode"]?.jsonPrimitive?.contentOrNull.orEmpty(),
                 dxCall = obj["dx_call"]?.jsonPrimitive?.contentOrNull.orEmpty(),
                 dxGrid = obj["dx_grid"]?.jsonPrimitive?.contentOrNull.orEmpty(),
+                txMsg = obj["tx_msg"]?.jsonPrimitive?.contentOrNull.orEmpty(),
                 txEnabled = obj["tx_enabled"]?.jsonPrimitive?.booleanOrNull ?: false,
                 transmitting = obj["transmitting"]?.jsonPrimitive?.booleanOrNull ?: false,
             )

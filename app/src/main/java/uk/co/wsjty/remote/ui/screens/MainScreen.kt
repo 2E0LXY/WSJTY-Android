@@ -55,6 +55,7 @@ import uk.co.wsjty.remote.ui.theme.WsjtyAccent
 import uk.co.wsjty.remote.ui.theme.WsjtyBorder
 import uk.co.wsjty.remote.ui.theme.WsjtyGreen
 import uk.co.wsjty.remote.ui.theme.WsjtyRed
+import uk.co.wsjty.remote.ui.theme.WsjtyYellow
 import uk.co.wsjty.remote.ui.theme.WsjtySurface
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -176,6 +177,16 @@ private fun StatusCard(status: StationStatus?) {
                 Text(
                     "Working: ${status.dxCall} ${status.dxGrid}".trim(),
                     style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            if (status.txMsg.isNotBlank()) {
+                Text(
+                    "TX: ${status.txMsg}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontFamily = FontFamily.Monospace,
+                    color = if (status.transmitting) WsjtyRed else WsjtyYellow,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
                 )
             }
         }
