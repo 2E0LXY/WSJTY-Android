@@ -3,8 +3,9 @@ package uk.co.wsjty.remote
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -12,18 +13,31 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
 import uk.co.wsjty.remote.ui.MainViewModel
 import uk.co.wsjty.remote.ui.screens.MainScreen
 import uk.co.wsjty.remote.ui.screens.PairingScreen
 import uk.co.wsjty.remote.ui.theme.WSJTYRemoteTheme
 
+// Same navy-to-green diagonal gradient applied to the desktop app's main
+// window background, sampled from the supplied artwork: #001D3F (top
+// left) through #06413B to #0E5A40 (bottom right).
+val WsjtyAppBackground = Brush.linearGradient(
+    colors = listOf(Color(0xFF001D3F), Color(0xFF06413B), Color(0xFF0E5A40)),
+)
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             WSJTYRemoteTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(WsjtyAppBackground),
+                ) {
                     WsjtyApp()
                 }
             }
