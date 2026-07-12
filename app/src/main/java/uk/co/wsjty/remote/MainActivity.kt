@@ -63,6 +63,8 @@ private fun WsjtyApp(viewModel: MainViewModel = viewModel()) {
             onHaltTx = viewModel::haltTx,
             onClearDecodes = viewModel::clearDecodes,
             onOpenSettings = { forceShowPairing = true },
+            onToggleAutoCq = viewModel::toggleAutoCq,
+            onToggleCqOnly = viewModel::toggleCqOnly,
         )
     }
 }

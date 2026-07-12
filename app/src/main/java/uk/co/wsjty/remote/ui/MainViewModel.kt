@@ -73,6 +73,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setBand(band: BandOption) = relay.sendSetBandByFreq(band.freqHz)
 
+    fun toggleAutoCq(on: Boolean) = relay.sendSetAutoCq(on)
+
+    fun toggleCqOnly(on: Boolean) = relay.sendSetCqOnly(on)
+
     fun clearDecodes() = relay.clearDecodes()
 }
 

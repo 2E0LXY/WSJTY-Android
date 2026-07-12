@@ -48,6 +48,8 @@ data class StationStatus(
     val txMsg: String,
     val txEnabled: Boolean,
     val transmitting: Boolean,
+    val autoCq: Boolean,
+    val cqOnly: Boolean,
 )
 
 /** A QSO the desktop just logged. */
@@ -93,6 +95,8 @@ fun parseRelayEvent(text: String): RelayEvent? {
                 txMsg = obj["tx_msg"]?.jsonPrimitive?.contentOrNull.orEmpty(),
                 txEnabled = obj["tx_enabled"]?.jsonPrimitive?.booleanOrNull ?: false,
                 transmitting = obj["transmitting"]?.jsonPrimitive?.booleanOrNull ?: false,
+                autoCq = obj["auto_cq"]?.jsonPrimitive?.booleanOrNull ?: false,
+                cqOnly = obj["cq_only"]?.jsonPrimitive?.booleanOrNull ?: false,
             )
         )
         "qso_logged" -> RelayEvent.QsoLoggedEvent(
@@ -121,3 +125,9 @@ fun buildSetBandByNameMessage(bandName: String): String =
 
 fun buildSetBandByFreqMessage(freqHz: Long): String =
     """{"type":"set_band","freq_hz":$freqHz}"""
+
+fun buildSetAutoCqMessage(on: Boolean): String =
+    """{"type":"set_auto_cq","on":$on}"""
+
+fun buildSetCqOnlyMessage(on: Boolean): String =
+    """{"type":"set_cq_only","on":$on}"""

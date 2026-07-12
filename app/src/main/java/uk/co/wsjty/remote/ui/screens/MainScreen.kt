@@ -78,6 +78,8 @@ fun MainScreen(
     onHaltTx: () -> Unit,
     onClearDecodes: () -> Unit,
     onOpenSettings: () -> Unit,
+    onToggleAutoCq: (Boolean) -> Unit,
+    onToggleCqOnly: (Boolean) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -120,9 +122,59 @@ fun MainScreen(
                         .padding(horizontal = 12.dp, vertical = 4.dp),
                 )
             }
+            StatusRow(
+                status = status,
+                onToggleAutoCq = onToggleAutoCq,
+                onToggleCqOnly = onToggleCqOnly,
+            )
             StatusCard(status, onSetBand)
             DecodeList(decodes, onReply, onClearDecodes)
         }
+    }
+}
+
+@Composable
+private fun StatusRow(
+    status: StationStatus?,
+    onToggleAutoCq: (Boolean) -> Unit,
+    onToggleCqOnly: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        QuickToggleChip(
+            label = "Auto CQ",
+            checked = status?.autoCq ?: false,
+            onToggle = onToggleAutoCq,
+        )
+        QuickToggleChip(
+            label = "CQ only",
+            checked = status?.cqOnly ?: false,
+            onToggle = onToggleCqOnly,
+        )
+    }
+}
+
+// Same on/off convention as the desktop's Band Activity toggle buttons:
+// checked = green, unchecked = the standard toolbar blue.
+@Composable
+private fun QuickToggleChip(label: String, checked: Boolean, onToggle: (Boolean) -> Unit) {
+    val bg = if (checked) WsjtyGreen else WsjtySurface
+    val border = if (checked) WsjtyGreen else WsjtyBorder
+    val fg = if (checked) MaterialTheme.colorScheme.onPrimary else WsjtyAccent.copy(alpha = 0.8f)
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(bg)
+            .border(1.dp, border, RoundedCornerShape(6.dp))
+            .clickable { onToggle(!checked) }
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+    ) {
+        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = fg)
     }
 }
 
