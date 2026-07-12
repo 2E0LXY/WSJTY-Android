@@ -101,7 +101,7 @@ fun MainScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         ConnectionDot(connectionState)
                         Spacer(Modifier.width(8.dp))
-                        Text("WSJT-Y Remote")
+                        Text("WSJT-Y Remote", color = Color.White)
                     }
                 },
                 actions = {
@@ -250,7 +250,7 @@ private fun StatusCard(status: StationStatus?, onSetBand: (BandOption) -> Unit) 
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             if (status == null) {
-                Text("Waiting for status from WSJT-Y…", style = MaterialTheme.typography.bodyMedium)
+                Text("Waiting for status from WSJT-Y…", style = MaterialTheme.typography.bodyMedium, color = Color.White)
             } else {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -279,6 +279,7 @@ private fun StatusCard(status: StationStatus?, onSetBand: (BandOption) -> Unit) 
                             " MHz " + status.mode,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
+                            color = Color.White,
                             modifier = Modifier.padding(bottom = 2.dp),
                         )
                         Icon(
@@ -300,6 +301,7 @@ private fun StatusCard(status: StationStatus?, onSetBand: (BandOption) -> Unit) 
                     Text(
                         "Working: ${status.dxCall} ${status.dxGrid}".trim(),
                         style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White,
                     )
                 }
                 if (status.txMsg.isNotBlank()) {
@@ -348,7 +350,7 @@ private fun BandGrid(onSelect: (BandOption) -> Unit) {
                     .clickable { onSelect(band) }
                     .padding(vertical = 10.dp),
             ) {
-                Text(band.label, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                Text(band.label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color.White)
             }
         }
     }
@@ -374,6 +376,7 @@ private fun DecodeList(
                 if (cqOnly) "${shown.size} of ${decodes.size} decodes (CQ only)  ·  tap to reply"
                 else "${decodes.size} decodes  ·  tap a CQ to reply",
                 style = MaterialTheme.typography.labelMedium,
+                color = Color.White,
             )
             Text(
                 "Clear",
