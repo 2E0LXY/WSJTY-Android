@@ -26,12 +26,21 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontFamily
+import uk.co.wsjty.remote.data.CallsignFlags
+import uk.co.wsjty.remote.ui.theme.Dseg7
+import uk.co.wsjty.remote.ui.theme.WsjtyFreqBlue
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
@@ -83,7 +92,16 @@ fun MainScreen(
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
-            if (connectionState == ConnectionState.DISCONNECTED && lastError != null) {
+            var showError by remember { mutableStateOf(false) }
+            LaunchedEffect(connectionState) {
+                if (connectionState == ConnectionState.DISCONNECTED) {
+                    kotlinx.coroutines.delay(5000)
+                    showError = true
+                } else {
+                    showError = false
+                }
+            }
+            if (showError && connectionState == ConnectionState.DISCONNECTED && lastError != null) {
                 Text(
                     text = lastError,
                     color = WsjtyRed,
@@ -129,13 +147,25 @@ private fun StatusCard(status: StationStatus?) {
         } else {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(
-                    formatFreqMHz(status.dialFreqHz) + " MHz " + status.mode,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        formatFreqMHz(status.dialFreqHz),
+                        fontFamily = Dseg7,
+                        fontSize = 26.sp,
+                        color = WsjtyFreqBlue,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                    Text(
+                        " MHz " + status.mode,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 2.dp),
+                    )
+                }
                 if (status.transmitting) {
                     Text("TX", color = WsjtyRed, fontWeight = FontWeight.Bold)
                 } else if (status.txEnabled) {
@@ -215,9 +245,31 @@ private fun DecodeRow(decode: Decode, onClick: () -> Unit) {
             .padding(horizontal = 12.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(decode.time, fontSize = 11.sp, modifier = Modifier.width(48.dp))
-        Text("${decode.snrDb}", fontSize = 11.sp, modifier = Modifier.width(28.dp))
-        Text(decode.message, fontSize = 12.sp, fontWeight = if (decode.isCq) FontWeight.Bold else FontWeight.Normal)
+        Text(
+            decode.time,
+            fontSize = 10.sp,
+            fontFamily = FontFamily.Monospace,
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier.width(52.dp),
+        )
+        Text(
+            "${decode.snrDb}",
+            fontSize = 10.sp,
+            fontFamily = FontFamily.Monospace,
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier.width(30.dp),
+        )
+        CallsignFlags.flagForMessage(decode.message)?.let { flag ->
+            Text(flag, fontSize = 12.sp)
+        }
+        Text(
+            decode.message,
+            fontSize = 12.sp,
+            fontWeight = if (decode.isCq) FontWeight.Bold else FontWeight.Normal,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 

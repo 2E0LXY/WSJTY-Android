@@ -11,3 +11,6 @@ val WsjtyGreen = Color(0xFF00AA00)
 val WsjtyRed = Color(0xFFCC0000)
 val WsjtyYellow = Color(0xFFE0C860)
 val WsjtyTextPrimary = Color(0xFFC0D8E8)
+
+// Seven-segment frequency readout
+val WsjtyFreqBlue = Color(0xFF7FD8FF)
