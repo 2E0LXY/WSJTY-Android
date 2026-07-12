@@ -1,6 +1,6 @@
 # WSJT-Y Remote (Android)
 
-Companion app for [WSJT-Y](https://github.com/2E0LXY/wsjt-zii). Connects to
+Companion app for [WSJT-Y](https://github.com/2E0LXY/wsjt-y). Connects to
 [wsjty-relay](https://github.com/2E0LXY/wsjty-relay) over WSS and:
 
 - Shows the live decode stream (callsigns heard, SNR, frequency, message)

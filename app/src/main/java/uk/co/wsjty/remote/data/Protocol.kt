@@ -14,7 +14,7 @@ import kotlinx.serialization.json.longOrNull
 
 /**
  * Wire protocol shared with wsjty-relay / Network::RemoteBridge in the
- * wsjt-zii desktop app. See wsjty-relay's README for the authoritative
+ * wsjt-y desktop app. See wsjty-relay's README for the authoritative
  * message shapes — this file mirrors them by hand rather than depending
  * on a shared schema, since the two live in different repos/languages.
  *
