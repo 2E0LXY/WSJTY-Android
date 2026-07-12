@@ -425,9 +425,19 @@ private fun SequenceSeparator(time: String) {
 @Composable
 private fun DecodeRow(decode: Decode, isActiveConversation: Boolean, onClick: () -> Unit) {
     val bg = when {
-        decode.forMe -> MaterialTheme.colorScheme.error.copy(alpha = 0.25f)
+        decode.forMe -> WsjtyYellow.copy(alpha = 0.20f)
         decode.isCq -> WsjtyAccent.copy(alpha = 0.10f)
         else -> MaterialTheme.colorScheme.surface
+    }
+    // Plain decode text was falling back to the theme's default onBackground
+    // colour (a dim blue-grey meant for body text against a mostly-solid
+    // surface), which was hard to read against the busier gradient
+    // background here — white is the base now, with forMe (your callsign
+    // was called) taking priority as yellow, then active-conversation red.
+    val textColor = when {
+        decode.forMe -> WsjtyYellow
+        isActiveConversation -> WsjtyRed
+        else -> Color.White
     }
     Row(
         modifier = Modifier
@@ -442,6 +452,7 @@ private fun DecodeRow(decode: Decode, isActiveConversation: Boolean, onClick: ()
             decode.time,
             fontSize = 10.sp,
             fontFamily = FontFamily.Monospace,
+            color = textColor,
             maxLines = 1,
             softWrap = false,
             modifier = Modifier.width(52.dp),
@@ -450,6 +461,7 @@ private fun DecodeRow(decode: Decode, isActiveConversation: Boolean, onClick: ()
             "${decode.snrDb}",
             fontSize = 10.sp,
             fontFamily = FontFamily.Monospace,
+            color = textColor,
             maxLines = 1,
             softWrap = false,
             modifier = Modifier.width(30.dp),
@@ -460,8 +472,8 @@ private fun DecodeRow(decode: Decode, isActiveConversation: Boolean, onClick: ()
         Text(
             decode.message,
             fontSize = 12.sp,
-            fontWeight = if (decode.isCq || isActiveConversation) FontWeight.Bold else FontWeight.Normal,
-            color = if (isActiveConversation) WsjtyRed else Color.Unspecified,
+            fontWeight = if (decode.isCq || isActiveConversation || decode.forMe) FontWeight.Bold else FontWeight.Normal,
+            color = textColor,
             modifier = Modifier.weight(1f),
         )
     }

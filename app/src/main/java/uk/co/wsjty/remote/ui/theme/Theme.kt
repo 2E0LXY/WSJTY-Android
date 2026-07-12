@@ -3,6 +3,7 @@ package uk.co.wsjty.remote.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 
 private val WsjtyColorScheme = darkColorScheme(
     primary = WsjtyAccent,
@@ -10,8 +11,8 @@ private val WsjtyColorScheme = darkColorScheme(
     secondary = WsjtyAccentDim,
     background = WsjtyBackground,
     surface = WsjtySurface,
-    onBackground = WsjtyTextPrimary,
-    onSurface = WsjtyTextPrimary,
+    onBackground = Color.White,
+    onSurface = Color.White,
     error = WsjtyRed,
     outline = WsjtyBorder,
 )
