@@ -126,6 +126,9 @@ fun buildSetBandByNameMessage(bandName: String): String =
 fun buildSetBandByFreqMessage(freqHz: Long): String =
     """{"type":"set_band","freq_hz":$freqHz}"""
 
+fun buildSetModeMessage(mode: String): String =
+    """{"type":"set_mode","mode":"$mode"}"""
+
 fun buildSetAutoCqMessage(on: Boolean): String =
     """{"type":"set_auto_cq","on":$on}"""
 

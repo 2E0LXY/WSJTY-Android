@@ -30,6 +30,11 @@ val ftBands = listOf(
     BandOption("6m", 50_313_000),
 )
 
+// Matches WSJT-Y's Mode menu (on_actionXXX_triggered handlers) exactly —
+// these strings go straight into the set_mode wire message and the
+// desktop dispatches on them verbatim.
+val wsjtyModes = listOf("FT8", "FT4", "MSK144", "Q65", "JT65", "JT9", "JT4", "WSPR", "FST4", "FST4W")
+
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val settings = SettingsStore(application)
@@ -94,6 +99,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun haltTx() = relay.sendHaltTx()
 
     fun setBand(band: BandOption) = relay.sendSetBandByFreq(band.freqHz)
+
+    fun setMode(mode: String) = relay.sendSetMode(mode)
 
     fun toggleAutoCq(on: Boolean) = relay.sendSetAutoCq(on)
 

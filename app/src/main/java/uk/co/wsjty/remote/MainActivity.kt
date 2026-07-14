@@ -89,6 +89,7 @@ private fun WsjtyApp(viewModel: MainViewModel = viewModel()) {
             qsoLog = qsoLog,
             onReply = viewModel::replyTo,
             onSetBand = viewModel::setBand,
+            onSetMode = viewModel::setMode,
             onHaltTx = viewModel::haltTx,
             onClearDecodes = viewModel::clearDecodes,
             onOpenSettings = { forceShowPairing = true },

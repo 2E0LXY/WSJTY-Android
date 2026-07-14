@@ -93,6 +93,8 @@ class RelayConnection(private val scope: CoroutineScope) {
 
     fun sendSetBandByFreq(freqHz: Long) = send(buildSetBandByFreqMessage(freqHz))
 
+    fun sendSetMode(mode: String) = send(buildSetModeMessage(mode))
+
     fun sendSetAutoCq(on: Boolean) = send(buildSetAutoCqMessage(on))
 
     fun sendSetCqOnly(on: Boolean) = send(buildSetCqOnlyMessage(on))

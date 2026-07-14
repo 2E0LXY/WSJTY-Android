@@ -66,6 +66,7 @@ import uk.co.wsjty.remote.data.Decode
 import uk.co.wsjty.remote.data.QsoLogged
 import uk.co.wsjty.remote.data.StationStatus
 import uk.co.wsjty.remote.ui.BandOption
+import uk.co.wsjty.remote.ui.wsjtyModes
 import uk.co.wsjty.remote.ui.ftBands
 import uk.co.wsjty.remote.ui.theme.Dseg7
 import uk.co.wsjty.remote.ui.theme.WsjtyAccent
@@ -88,6 +89,7 @@ fun MainScreen(
     qsoLog: List<QsoLogged>,
     onReply: (Decode) -> Unit,
     onSetBand: (BandOption) -> Unit,
+    onSetMode: (String) -> Unit,
     onHaltTx: () -> Unit,
     onClearDecodes: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -140,7 +142,7 @@ fun MainScreen(
                 onToggleAutoCq = onToggleAutoCq,
                 onToggleCqOnly = onToggleCqOnly,
             )
-            StatusCard(status, onSetBand)
+            StatusCard(status, onSetBand, onSetMode)
 
             var showQsoLog by remember { mutableStateOf(false) }
             MainTabRow(
@@ -268,8 +270,9 @@ private fun ConnectionDot(state: ConnectionState) {
 }
 
 @Composable
-private fun StatusCard(status: StationStatus?, onSetBand: (BandOption) -> Unit) {
+private fun StatusCard(status: StationStatus?, onSetBand: (BandOption) -> Unit, onSetMode: (String) -> Unit) {
     var bandPickerOpen by remember { mutableStateOf(false) }
+    var modePickerOpen by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -286,39 +289,71 @@ private fun StatusCard(status: StationStatus?, onSetBand: (BandOption) -> Unit) 
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    // Tapping the frequency/mode expands the band grid below —
-                    // DSEG7 readout is preserved, just made clickable with a
-                    // chevron that flips to show open/closed state.
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .clickable { bandPickerOpen = !bandPickerOpen }
-                            .padding(vertical = 2.dp, horizontal = 4.dp),
-                    ) {
-                        Text(
-                            formatFreqMHz(status.dialFreqHz),
-                            fontFamily = Dseg7,
-                            fontSize = 26.sp,
-                            color = if (bandPickerOpen) WsjtyAccent else WsjtyFreqBlue,
-                            maxLines = 1,
-                            softWrap = false,
-                        )
-                        Text(
-                            " MHz " + status.mode,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(bottom = 2.dp),
-                        )
-                        Icon(
-                            if (bandPickerOpen) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                            contentDescription = if (bandPickerOpen) "Hide band picker" else "Change band",
-                            tint = WsjtyAccent,
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        // Tapping the frequency expands the band grid below —
+                        // DSEG7 readout is preserved, just made clickable with
+                        // a chevron that flips to show open/closed state.
+                        Row(
+                            verticalAlignment = Alignment.Bottom,
                             modifier = Modifier
-                                .size(20.dp)
-                                .padding(bottom = 2.dp),
-                        )
+                                .clip(RoundedCornerShape(6.dp))
+                                .clickable {
+                                    bandPickerOpen = !bandPickerOpen
+                                    if (bandPickerOpen) modePickerOpen = false
+                                }
+                                .padding(vertical = 2.dp, horizontal = 4.dp),
+                        ) {
+                            Text(
+                                formatFreqMHz(status.dialFreqHz),
+                                fontFamily = Dseg7,
+                                fontSize = 26.sp,
+                                color = if (bandPickerOpen) WsjtyAccent else WsjtyFreqBlue,
+                                maxLines = 1,
+                                softWrap = false,
+                            )
+                            Text(
+                                " MHz",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                modifier = Modifier.padding(bottom = 2.dp),
+                            )
+                            Icon(
+                                if (bandPickerOpen) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                                contentDescription = if (bandPickerOpen) "Hide band picker" else "Change band",
+                                tint = WsjtyAccent,
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .padding(bottom = 2.dp),
+                            )
+                        }
+                        // Tapping the mode expands a mode grid the same way.
+                        Row(
+                            verticalAlignment = Alignment.Bottom,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .clickable {
+                                    modePickerOpen = !modePickerOpen
+                                    if (modePickerOpen) bandPickerOpen = false
+                                }
+                                .padding(vertical = 2.dp, horizontal = 4.dp),
+                        ) {
+                            Text(
+                                " " + status.mode,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = if (modePickerOpen) WsjtyAccent else Color.White,
+                                modifier = Modifier.padding(bottom = 2.dp),
+                            )
+                            Icon(
+                                if (modePickerOpen) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                                contentDescription = if (modePickerOpen) "Hide mode picker" else "Change mode",
+                                tint = WsjtyAccent,
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .padding(bottom = 2.dp),
+                            )
+                        }
                     }
                     if (status.transmitting) {
                         Text("TX", color = WsjtyRed, fontWeight = FontWeight.Bold)
@@ -356,6 +391,17 @@ private fun StatusCard(status: StationStatus?, onSetBand: (BandOption) -> Unit) 
                 bandPickerOpen = false
             })
         }
+
+        AnimatedVisibility(
+            visible = modePickerOpen,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut(),
+        ) {
+            ModeGrid(currentMode = status?.mode.orEmpty(), onSelect = { mode ->
+                onSetMode(mode)
+                modePickerOpen = false
+            })
+        }
     }
 }
 
@@ -380,6 +426,34 @@ private fun BandGrid(onSelect: (BandOption) -> Unit) {
                     .padding(vertical = 10.dp),
             ) {
                 Text(band.label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color.White)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModeGrid(currentMode: String, onSelect: (String) -> Unit) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(5),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(96.dp)
+            .padding(bottom = 10.dp, start = 8.dp, end = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        items(wsjtyModes) { mode ->
+            val active = mode.equals(currentMode, ignoreCase = true)
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(if (active) WsjtyAccent.copy(alpha = 0.20f) else Color.Transparent)
+                    .border(1.dp, if (active) WsjtyAccent else WsjtyBorder, RoundedCornerShape(6.dp))
+                    .clickable { onSelect(mode) }
+                    .padding(vertical = 10.dp),
+            ) {
+                Text(mode, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color.White)
             }
         }
     }
